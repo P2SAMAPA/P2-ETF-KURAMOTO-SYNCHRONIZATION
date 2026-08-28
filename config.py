@@ -20,9 +20,9 @@ WINDOWS = [126, 252, 504, 756, 1008]
 KURAMOTO_CONFIG = {
     "dt": 0.01,
     "K": 1.0,
-    "window": 252,
     "integration_steps": 1000,
     "max_phase_diff": np.pi,
+    "WINDOWS": WINDOWS,
 }
 
 TOP_N = 3
