@@ -3,6 +3,7 @@ config.py  —  Kuramoto ETF Synchronization Engine
 """
 
 import os
+import numpy as np
 
 HF_TOKEN = os.environ.get("HF_TOKEN")
 DATA_REPO = "P2SAMAPA/fi-etf-macro-signal-master-data"
