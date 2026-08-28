@@ -78,7 +78,6 @@ def main():
     
     top_picks = data.get('top_picks', {})
     sync_metrics = data.get('sync_metrics', {})
-    window_results = data.get('window_results', {})
     best_windows = data.get('best_windows', {})
     
     with tab1:
@@ -88,9 +87,10 @@ def main():
             metrics = sync_metrics.get(universe, {})
             R = metrics.get('R_current', 0.5)
             best_win = best_windows.get(universe, {}).get('window', 252)
+            mode = metrics.get('mode', 'UNKNOWN')
             
             st.markdown(f"### {universe}")
-            st.markdown(f"**Best Window:** {best_win} days | **R(t):** {R:.3f}")
+            st.markdown(f"**Best Window:** {best_win} days | **R(t):** {R:.3f} | **Mode:** {mode}")
             
             if R > 0.7:
                 st.warning("⚠️ High Synchronization - Market is crowded")
@@ -120,48 +120,28 @@ def main():
     with tab2:
         st.subheader("Window Performance - Top 3 ETFs by Universe")
         
-        for universe, results in window_results.items():
+        for universe in sync_metrics.keys():
             st.markdown(f"### {universe}")
             
-            if not results:
-                st.warning("No window results available")
+            universe_data = sync_metrics.get(universe, {})
+            window_results = universe_data.get('window_results', {})
+            
+            if not window_results:
+                st.warning(f"No window results available for {universe}")
                 continue
             
-            # Create dataframe
-            df_windows = pd.DataFrame([
-                {
-                    "Window": w,
-                    "Sharpe": r.get('overall_sharpe', 0),
-                    "Directional": r.get('overall_directional', 0) * 100,
-                }
-                for w, r in results.items()
-            ]).sort_values("Window")
-            
-            # Display table
-            st.dataframe(
-                df_windows,
-                use_container_width=True,
-                hide_index=True,
-                column_config={
-                    "Window": "Window (days)",
-                    "Sharpe": st.column_config.NumberColumn("Sharpe Ratio", format="%.3f"),
-                    "Directional": st.column_config.NumberColumn("Directional Acc", format="%.1f%%"),
-                }
-            )
-            
-            # Show top 3 ETFs for each window
-            st.markdown("**Top 3 ETFs by Window:**")
-            
-            # Get top picks for this universe across windows
-            for window in sorted(results.keys()):
-                # Get the picks for this specific window
-                # Since we don't have per-window picks stored, show the overall picks
-                picks = top_picks.get(universe, [])
+            # Display each window's picks
+            for window, result in sorted(window_results.items()):
+                window_int = int(window)
+                picks = result.get('picks', [])
+                R_current = result.get('R_current', 0)
+                mode = result.get('mode', 'UNKNOWN')
+                
                 if picks:
-                    tickers = [p['ticker'] for p in picks[:3]]
-                    st.markdown(f"**{window}d:** {', '.join(tickers)}")
+                    ticker_str = ', '.join([f"{p['ticker']} ({p['expected_return']:.1f}%)" for p in picks])
+                    st.markdown(f"**{window_int}d** (R={R_current:.3f}, {mode}): {ticker_str}")
                 else:
-                    st.markdown(f"**{window}d:** No picks available")
+                    st.markdown(f"**{window_int}d**: No picks")
             
             st.markdown("---")
 
